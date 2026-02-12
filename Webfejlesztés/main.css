@@ -1,0 +1,79 @@
+body {
+    font-family: Arial, Verdana, Helvetica, sans-serif;
+    text-align: left;
+}   
+
+h1,h2 {
+    font-family: 'Oswald', sans-serif;
+	text-shadow: 3px, 3px, 3px, #ccc;
+}
+
+h1{
+    background-color: #ccc;
+    text-align: center;
+}
+
+footer{
+    text-align: center;
+    background-color: black;
+    padding:30px 0 30px 0;
+}
+
+header{
+    border-radius: 20px;
+    margin-bottom: 52px;
+    text-align: left;
+}
+
+.float-left{
+    float: left;
+    margin-top: 2px;
+}
+
+.float-right{
+    float: right;
+    margin-top: 2px;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+main{
+    margin-bottom: 100px;
+}
+
+h1#masodik{
+    background-image: url(../nagybeadandó/photo4.jpg);
+    padding-bottom: 200px;
+    background-position: 120px -80px;
+    font-size: 500%;
+}
+
+h1#elso{
+    background-image: url(../nagybeadandó/photo5.jpg);
+    padding-bottom: 200px;
+    background-position: 120px -80px;
+    font-size: 500%;
+}
+
+h1#harmadik{
+    background-image: url(../nagybeadandó/photo6.jpg);
+    padding-bottom: 200px;
+    background-position: 120px -80px;
+    font-size: 500%;
+}
+
+h1 img:hover{
+    box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}
+
+
+@media screen and (max-width: 700px)
+{
+    article{
+        float:none;
+        width:300px;
+        margin: 0;
+    }
+}
