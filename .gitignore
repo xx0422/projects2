@@ -1,0 +1,35 @@
+# ===== C# / Visual Studio =====
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# ===== Java =====
+*.class
+*.jar
+*.war
+*.ear
+target/
+.gradle/
+build/
+out/
+.idea/
+
+# ===== Node / Web =====
+node_modules/
+dist/
+build/
+.cache/
+
+# ===== General junk =====
+*.log
+Thumbs.db
+.DS_Store
+
+# ===== CAD / Large exports (optional) =====
+*.stl
+*.step
+*.iges
+*.obj
+*.fbx

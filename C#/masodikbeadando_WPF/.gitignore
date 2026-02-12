@@ -1,0 +1,15 @@
+## Visual Studio / C# build output
+bin/
+obj/
+.vs/
+
+## User-specific files
+*.user
+*.suo
+
+## Logs
+*.log
+
+## OS junk
+Thumbs.db
+.DS_Store

@@ -1,0 +1,57 @@
+﻿<Window x:Class="masodikbeadando.GameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:masodikbeadando.ViewModels"
+        Title="Snake" Height="600" Width="600"
+        Focusable="True"
+        KeyDown="Window_KeyDown">
+
+
+    <DockPanel>
+        <!-- Fejléc -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="5">
+            <TextBlock Text="Pontszám: " FontSize="16"/>
+            <TextBlock Text="{Binding Score}" FontSize="16" Margin="5,0,20,0"/>
+            
+            <TextBlock Text="Idő:" FontSize="16" Margin="20,0,0,0"/>
+            <TextBlock Text="{Binding ElapsedTime}" FontSize="16" Margin="5,0,0,0"/>
+            
+            <Button Content="{Binding IsPaused, Converter={StaticResource BoolToPauseTextConverter}}"
+                    Width="80" Margin="5,0,0,0"
+                    Command="{Binding PauseToggleCommand}"/>
+            
+        </StackPanel>
+
+        <!-- Tábla -->
+        <ItemsControl ItemsSource="{Binding Cells}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="{Binding Height}" Columns="{Binding Width}"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:CellViewModel}">
+                    <Border Margin="0.5">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Black"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsObstacle}" Value="True">
+                                        <Setter Property="Background" Value="Gray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSnake}" Value="True">
+                                        <Setter Property="Background" Value="Green"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsFood}" Value="True">
+                                        <Setter Property="Background" Value="Red"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </DockPanel>
+</Window>

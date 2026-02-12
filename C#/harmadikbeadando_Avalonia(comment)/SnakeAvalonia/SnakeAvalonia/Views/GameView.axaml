@@ -1,0 +1,89 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Snake.Core.ViewModels;assembly=Snake.Core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SnakeAvalonia.Views.GameView"
+             Focusable="True"
+             x:DataType="vm:GameViewModel">
+
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Left" Command="{Binding TurnLeftCommand}" />
+        <KeyBinding Gesture="Right" Command="{Binding TurnRightCommand}" />
+        <KeyBinding Gesture="P" Command="{Binding PauseToggleCommand}" />
+        <KeyBinding Gesture="Space" Command="{Binding PauseToggleCommand}" />
+    </UserControl.KeyBindings>
+
+    <UserControl.Styles>
+        <Style Selector="Border.cell"> <Setter Property="Background" Value="Black"/> </Style>
+        <Style Selector="Border.snake"> <Setter Property="Background" Value="#00FF00"/> <Setter Property="CornerRadius" Value="2"/> </Style>
+        <Style Selector="Border.food"> <Setter Property="Background" Value="Red"/> <Setter Property="CornerRadius" Value="50"/> </Style>
+        <Style Selector="Border.obstacle"> <Setter Property="Background" Value="Gray"/> </Style>
+        <Style Selector="TextBlock.hud">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,20,0"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid Background="Transparent"
+          PointerPressed="OnPointerPressed"
+          PointerReleased="OnPointerReleased">
+        
+        <DockPanel LastChildFill="True">
+            <Border DockPanel.Dock="Top" Background="#222222" Padding="10">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                    <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,20,0">
+                        <TextBlock Text="SCORE: " Classes="hud" Foreground="#FFD700"/>
+                        <TextBlock Text="{Binding Score}" Classes="hud"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Grid.Column="1">
+                        <TextBlock Text="TIME: " Classes="hud" Foreground="LightBlue"/>
+                        <TextBlock Text="{Binding ElapsedTime, StringFormat='{}{0:mm\\:ss}'}" Classes="hud"/>
+                    </StackPanel>
+                    <Button Grid.Column="3" Command="{Binding PauseToggleCommand}" 
+                            Content="PAUSE / RESUME"
+                            Padding="10,5" Background="#444444" Foreground="White" Focusable="False"/>
+                </Grid>
+            </Border>
+
+            <Viewbox Stretch="Uniform" Margin="10">
+                <ItemsControl ItemsSource="{Binding Cells}" Background="#333333">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="{Binding Height}" Columns="{Binding Width}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="cell"
+                                    x:DataType="vm:CellViewModel" 
+                                    Classes.snake="{Binding IsSnake}"
+                                    Classes.food="{Binding IsFood}"
+                                    Classes.obstacle="{Binding IsObstacle}"
+                                    Width="20" Height="20" 
+                                    Margin="1"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Viewbox>
+        </DockPanel>
+
+        <Border IsVisible="{Binding IsGameOver}" Background="#CC000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Border Background="#333333" BorderBrush="Red" BorderThickness="2" CornerRadius="10" Padding="30" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="300">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="GAME OVER!" FontSize="36" FontWeight="Bold" Foreground="Red" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="FINAL SCORE: " Foreground="White" FontSize="20"/>
+                        <TextBlock Text="{Binding GameOverScore}" Foreground="#FFD700" FontSize="20" FontWeight="Bold"/>
+                    </StackPanel>
+                    <Button Command="{Binding ExitGameCommand}" Content="OK" HorizontalAlignment="Center" Width="100" Padding="10" Background="Red" Foreground="White" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>
