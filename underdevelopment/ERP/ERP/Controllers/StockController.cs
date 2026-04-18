@@ -17,13 +17,13 @@ namespace ERP.Controllers
 
         // Bevételezés végpont
         [HttpPost("receipt")]
-        public async Task<IActionResult> ProcessReceipt(int productId, decimal quantity, decimal unitPrice)
+        public async Task<IActionResult> ProcessReceipt(int productId, int warehouseId, decimal quantity, decimal unitPrice)
         {
             if (quantity <= 0) return BadRequest("A mennyiségnek pozitívnak kell lennie.");
 
             try
             {
-                await _productService.ProcessStockReceiptAsync(productId, quantity, unitPrice);
+                await _productService.ProcessStockReceiptAsync(productId, warehouseId, quantity, unitPrice);
                 return Ok(new { message = "Bevételezés sikeres, átlagár frissítve." });
             }
             catch (Exception ex)
@@ -33,12 +33,12 @@ namespace ERP.Controllers
         }
 
         [HttpPost("issue")]
-        public async Task<IActionResult> ProcessIssue(int productId, decimal quantity)
+        public async Task<IActionResult> ProcessIssue(int productId, int warehouseId, decimal quantity)
         {
             if (quantity <= 0) return BadRequest("A mennyiségnek pozitívnak kell lennie.");
             try
             {
-                await _productService.ProcessStockIssueAsync(productId, quantity);
+                await _productService.ProcessStockIssueAsync(productId, warehouseId, quantity);
                 return Ok(new { message = "Kiadás sikeres." });
             }
             catch (InvalidOperationException ex)
@@ -63,6 +63,41 @@ namespace ERP.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        [HttpPost("transfer")]
+        public async Task<IActionResult> TransferStock(int productId, int fromWarehouseId, int toWarehouseId, decimal quantity)
+        {
+            if (quantity <= 0) return BadRequest("A mennyiségnek pozitívnak kell lennie.");
+
+            try
+            {
+                await _productService.TransferStockAsync(productId, fromWarehouseId, toWarehouseId, quantity);
+                return Ok(new { message = $"Sikeres átvezetés: {quantity} db termék mozgatva." });
+            }
+            catch (Exception ex)
+            {
+                // Itt kapjuk el, ha nincs elég készlet vagy nem létezik a raktár
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("warehouse/{warehouseId}")]
+        public async Task<IActionResult> GetStockByWarehouse(int warehouseId)
+        {
+            var stock = await _productService.GetStockByWarehouseAsync(warehouseId);
+            return Ok(stock);
+        }
+
+        [HttpGet("where-is/{productId}")]
+        public async Task<IActionResult> GetProductLocations(int productId, int quantity)
+        {
+            var locations = await _productService.GetProductLocationsAsync(productId, quantity);
+
+            if (!locations.Any())
+                return NotFound(new { message = "Ez a termék egyik raktárban sem található meg." });
+
+            return Ok(locations);
         }
     }
 }

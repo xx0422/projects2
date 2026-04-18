@@ -42,6 +42,7 @@ namespace ERP.Models
         // Idegen kulcs a kategóriához
         public int CategoryId { get; set; }
         public virtual Category? Category { get; set; }
+        public virtual ICollection<StockItem> StockItems { get; set; } = new List<StockItem>();
 
         // Speciális mezők (Nullable, mert nem minden termékhez kellenek) 
 

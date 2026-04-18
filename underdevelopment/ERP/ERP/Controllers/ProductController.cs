@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ERP.DTOs;
 using ERP.Models;
 using ERP.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ERP.Controllers
 {
     [ApiController]
     [Route("api/[controller]")] // Az elérési út: api/product
+    [Authorize]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -20,7 +23,20 @@ namespace ERP.Controllers
         public async Task<ActionResult<IEnumerable<Product>>> GetAll()
         {
             var products = await _productService.GetAllProductsAsync();
-            return Ok(products);
+
+            var result = products.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Sku = p.SKU,
+                Category = p.Category,
+                CurrentAveragePrice = p.CurrentAveragePrice,
+                PurchasePrice = p.PurchasePrice,
+                TotalStock = (int)(p.StockItems?.Sum(s => s.Quantity) ?? 0),
+                Unit = p.Unit
+            });
+
+            return Ok(result);
         }
 
         // 2. Egy termék lekérése ID alapján
@@ -35,6 +51,7 @@ namespace ERP.Controllers
 
         // 3. ÚJ TERMÉK LÉTREHOZÁSA 
         [HttpPost]
+        [Authorize(Roles = "Admin,Logistics")]
         public async Task<IActionResult> Create([FromBody] Product product)
         {
             try

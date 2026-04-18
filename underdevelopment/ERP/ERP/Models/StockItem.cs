@@ -10,9 +10,9 @@ namespace ERP.Models
         public int Id { get; set; }
         public int ProductId { get; set; }
         public int? WarehouseId { get; set; }
+        public virtual Warehouse? Warehouse { get; set; }
         public decimal Quantity { get; set; } // Jelenlegi készlet
 
-        [JsonIgnore]
         public virtual Product? Product { get; set; }
 
         // Függvények

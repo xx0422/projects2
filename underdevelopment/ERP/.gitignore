@@ -1,0 +1,32 @@
+# Build mappák
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / VSCode (ha használod)
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# OS fájlok
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+
+# ASP.NET Core
+appsettings.Development.json
+
+# Publish
+publish/

@@ -8,13 +8,12 @@ namespace ERP.Services
     {
         private readonly ApplicationDbContext _context;
 
-        // Dependency Injection: itt kérjük el a DbContextet
+        // Dependency Injection
         public ProductService(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // --- Mostantól ide kell írnod a metódusok belsejét ---
 
         public async Task CreateProductAsync(Product product)
         {
@@ -36,7 +35,7 @@ namespace ERP.Services
             if (!await _context.Categories.AnyAsync(c => c.Id == product.CategoryId))
                 throw new ArgumentException("A megadott kategória nem létezik.");
 
-            // 1. Kérjük le a szabályokat az aktuális termékre
+            // 1. Lekérjük a szabályokat az aktuális termékre
             var rules = RuleProvider.GetRulesForProduct(product);
 
             // 2. Futtassuk le őket
@@ -88,19 +87,24 @@ namespace ERP.Services
 
         public async Task<IEnumerable<Product?>> GetAllProductsAsync()
         {
-            return await _context.Products.ToListAsync();
+            return await _context.Products
+                .Include(p => p.Category)   // Hogy lássuk a kategória nevét
+                .Include(p => p.StockItems)  // Hogy lássuk a készletet
+                .ToListAsync();
+
         }
 
-        public async Task ProcessStockReceiptAsync(int productId, decimal quantity, decimal unitPrice)
+        public async Task ProcessStockReceiptAsync(int productId, int warehouseId, decimal quantity, decimal unitPrice)
         {
             var product = await _context.Products.FindAsync(productId);
             if (product == null) throw new Exception("Termék nem található.");
 
-            var stock = await _context.StockItems.FirstOrDefaultAsync(s => s.ProductId == productId);
+            var stock = await _context.StockItems
+            .FirstOrDefaultAsync(s => s.ProductId == productId && s.WarehouseId == warehouseId);
 
             if (stock == null)
             {
-                stock = new StockItem { ProductId = productId, Quantity = 0, WarehouseId = null };
+                stock = new StockItem { ProductId = productId, Quantity = 0, WarehouseId = warehouseId };
                 _context.StockItems.Add(stock);
             }
 
@@ -118,9 +122,32 @@ namespace ERP.Services
                 product.CurrentAveragePrice = unitPrice;
             }
 
-            // Csak a számítás UTÁN frissítjük a készletet az adatbázis objektumban
             stock.Quantity = newQuantity;
 
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task TransferStockAsync(int productId, int fromWarehouseId, int toWarehouseId, decimal quantity)
+        {
+            if (fromWarehouseId == toWarehouseId) throw new Exception("A forrás és cél raktár nem lehet ugyanaz.");
+
+            var sourceStock = await _context.StockItems
+                .FirstOrDefaultAsync(s => s.ProductId == productId && s.WarehouseId == fromWarehouseId);
+
+            var targetStock = await _context.StockItems
+                .FirstOrDefaultAsync(s => s.ProductId == productId && s.WarehouseId == toWarehouseId);
+
+            if (sourceStock == null || sourceStock.Quantity < quantity)
+                throw new Exception("Nincs elegendő készlet a kiinduló raktárban.");
+
+            if (targetStock == null)
+            {
+                targetStock = new StockItem { ProductId = productId, Quantity = 0, WarehouseId = toWarehouseId };
+                _context.StockItems.Add(targetStock);
+            }
+
+            sourceStock.Quantity -= quantity;
+            targetStock.Quantity += quantity;
             await _context.SaveChangesAsync();
         }
 
@@ -129,10 +156,10 @@ namespace ERP.Services
             await _context.Products.Where(p => p.CategoryId == categoryId).ToListAsync();
         }
 
-        public async Task ProcessStockIssueAsync(int productId, decimal quantity)
+        public async Task ProcessStockIssueAsync(int productId, int warehouseId, decimal quantity)
         {
             var product = await _context.Products.FindAsync(productId);
-            var stock = await _context.StockItems.FirstOrDefaultAsync(s => s.ProductId == productId);
+            var stock = await _context.StockItems.FirstOrDefaultAsync(s => s.ProductId == productId && s.WarehouseId == warehouseId);
 
             if (product == null || stock == null)
                 throw new Exception("Termék vagy készlet nem található.");
@@ -144,17 +171,60 @@ namespace ERP.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<object>> GetInventorySummaryAsync()
+
+        public async Task<IEnumerable<object>> GetStockByWarehouseAsync(int warehouseId)
         {
             return await _context.StockItems
                 .Include(s => s.Product)
+                .Where(s => s.WarehouseId == warehouseId) 
                 .Select(s => new {
                     ProductId = s.ProductId,
                     ProductName = s.Product.Name,
                     SKU = s.Product.SKU,
-                    CurrentStock = s.Quantity,
+                    Quantity = s.Quantity,
+                    Unit = s.Product.Unit.ToString(), // db, kg, l...
                     AveragePrice = s.Product.CurrentAveragePrice,
-                    TotalValue = s.Quantity * s.Product.CurrentAveragePrice
+                    SubTotalValue = s.Quantity * s.Product.CurrentAveragePrice
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<object>> GetInventorySummaryAsync()
+        {
+            var allItems = await _context.StockItems
+                .Include(s => s.Product)
+                .Include(s => s.Warehouse)
+                .ToListAsync();
+
+            return allItems
+                .GroupBy(s => s.ProductId)
+                .Select(group => new {
+                    ProductId = group.Key,
+                    ProductName = group.First().Product.Name,
+                    SKU = group.First().Product.SKU,
+
+                    TotalQuantity = group.Sum(s => s.Quantity),
+                    AveragePrice = group.First().Product.CurrentAveragePrice,
+
+                    TotalInventoryValue = group.Sum(s => s.Quantity) * group.First().Product.CurrentAveragePrice,
+
+                    WarehouseDistribution = group.Select(s => new {
+                        WarehouseName = s.Warehouse?.Name ?? "Nincs kijelölve",
+                        WarehouseId = s.WarehouseId,
+                        Quantity = s.Quantity
+                    })
+                });
+        }
+        public async Task<IEnumerable<object>> GetProductLocationsAsync(int productId, int quantity)
+        {
+            return await _context.StockItems
+                .Where(s => s.ProductId == productId && s.Quantity >= quantity) // Csak ott, ahol tényleg van készlet
+                .Include(s => s.Warehouse)
+                .Select(s => new {
+                    WarehouseId = s.WarehouseId,
+                    WarehouseName = s.Warehouse != null ? s.Warehouse.Name : "Nincs név",
+                    CurrentStock = s.Quantity,
+                    Unit = s.Product.Unit.ToString()
                 })
                 .ToListAsync();
         }

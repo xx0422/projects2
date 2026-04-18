@@ -1,16 +1,19 @@
-using Microsoft.EntityFrameworkCore;
 using ERP.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore; // <-- Add this using directive
+
 
 namespace ERP.Data
 {
-    public class ApplicationDbContext : DbContext
+    // Itt IdentityUser helyett használhatsz saját ApplicationUser-t is, ha bõvítenéd
+    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
 
-        // Táblák 
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Order> Orders { get; set; }
@@ -19,23 +22,23 @@ namespace ERP.Data
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<StockItem> StockItems { get; set; }
-        public DbSet<User> Users { get; set; }
+        // public DbSet<User> Users { get; set; } <--- EZT TÖRÖLD!
         public DbSet<Shipment> Shipments { get; set; }
 
-        // --- Konfiguráció (Fluent API) ---
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // EZ NAGYON FONTOS: maradjon az elsõ sor, ez konfigurálja az Identity táblákat
             base.OnModelCreating(modelBuilder);
 
-            // 1. Számlaszám legyen egyedi (jogi követelmény)
             modelBuilder.Entity<Invoice>()
                 .HasIndex(i => i.InvoiceNumber)
                 .IsUnique();
 
-            // 2. SKU (cikkszám) legyen egyedi (ne lehessen két azonos cikkszámú terméked)
             modelBuilder.Entity<Product>()
                 .HasIndex(p => p.SKU)
                 .IsUnique();
+
+            // Itt konfigurálhatod a többi kapcsolatot is (pl. decimal pontosság)
         }
     }
 }

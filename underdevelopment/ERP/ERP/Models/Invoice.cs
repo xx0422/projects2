@@ -14,10 +14,14 @@ public class Invoice
 
     public DateTime IssueDate { get; set; } = DateTime.UtcNow; // Kiállítás dátuma
     public DateTime DueDate { get; set; }      // Fizetési határidő
+    public string CustomerName { get; set; } = string.Empty; 
 
     // Kapcsolatok
-    public int OrderId { get; set; }           // Melyik rendelésről szól
+    public int? OrderId { get; set; }           // Melyik rendelésről szól
     public virtual Order Order { get; set; } = null!;
+    [Required]
+    public int WarehouseId { get; set; } // Honnan adjuk ki az árut?
+    public virtual Warehouse Warehouse { get; set; } = null!;
 
     // Pénzügyi összesítők
     [Column(TypeName = "decimal(18,2)")]

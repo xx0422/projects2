@@ -20,8 +20,6 @@ namespace ERP.Models
 		[StringLength(100)]
 		public required string Name{ get; set; }
 		public CategoryType Type{ get; set; }
-
-        [JsonIgnore] //Ha JSON-t gyártasz, ne akard kilistázni a kategóriához tartozó összes terméket
         public virtual ICollection<Product> Products{ get; set; } = new List<Product>();
 
     }
