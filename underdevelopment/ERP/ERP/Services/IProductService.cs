@@ -12,7 +12,7 @@ namespace ERP.Services
         Task UpdateProductAsync(Product product);
         Task DeleteProductAsync(int id);
 
-        Task ProcessStockReceiptAsync(int productId, int warehouseId, decimal quantity, decimal unitPrice);
+        Task ProcessStockReceiptAsync(int productId, int warehouseId, decimal quantity, decimal unitPrice, DateTime? expirationDate = null);
         Task TransferStockAsync(int productId, int fromWarehouseId, int toWarehouseId, decimal quantity);
         Task? GetProductsByCategory(int categoryId);
         Task ProcessStockIssueAsync(int productId, int warehouseId, decimal quantity);

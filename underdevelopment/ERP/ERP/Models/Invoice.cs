@@ -18,10 +18,9 @@ public class Invoice
 
     // Kapcsolatok
     public int? OrderId { get; set; }           // Melyik rendelésről szól
-    public virtual Order Order { get; set; } = null!;
-    [Required]
-    public int WarehouseId { get; set; } // Honnan adjuk ki az árut?
-    public virtual Warehouse Warehouse { get; set; } = null!;
+    public virtual Order? Order { get; set; } = null!;
+    public int? WarehouseId { get; set; } // Honnan adjuk ki az árut?
+    public virtual Warehouse? Warehouse { get; set; } = null!;
 
     // Pénzügyi összesítők
     [Column(TypeName = "decimal(18,2)")]

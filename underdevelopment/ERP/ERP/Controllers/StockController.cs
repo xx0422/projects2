@@ -1,9 +1,11 @@
 ﻿using ERP.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERP.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class StockController : ControllerBase
@@ -17,13 +19,13 @@ namespace ERP.Controllers
 
         // Bevételezés végpont
         [HttpPost("receipt")]
-        public async Task<IActionResult> ProcessReceipt(int productId, int warehouseId, decimal quantity, decimal unitPrice)
+        public async Task<IActionResult> ProcessReceipt(int productId, int warehouseId, decimal quantity, decimal unitPrice, DateTime? expirationDate = null)
         {
             if (quantity <= 0) return BadRequest("A mennyiségnek pozitívnak kell lennie.");
 
             try
             {
-                await _productService.ProcessStockReceiptAsync(productId, warehouseId, quantity, unitPrice);
+                await _productService.ProcessStockReceiptAsync(productId, warehouseId, quantity, unitPrice, expirationDate);
                 return Ok(new { message = "Bevételezés sikeres, átlagár frissítve." });
             }
             catch (Exception ex)
@@ -32,6 +34,7 @@ namespace ERP.Controllers
             }
         }
 
+        //Kiadás
         [HttpPost("issue")]
         public async Task<IActionResult> ProcessIssue(int productId, int warehouseId, decimal quantity)
         {

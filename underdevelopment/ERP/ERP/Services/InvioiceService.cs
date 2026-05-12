@@ -8,32 +8,69 @@ namespace ERP.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IProductService _productService;
+        private readonly OrderService _orderService; // Új függőség
+        private readonly AuditService _audit;
 
-        public InvoiceService(ApplicationDbContext context, IProductService productService)
+        public InvoiceService(ApplicationDbContext context, IProductService productService, OrderService orderService, AuditService audit)
         {
             _context = context;
             _productService = productService;
+            _orderService = orderService;
+            _audit = audit;
         }
 
         public async Task<Invoice> CreateInvoiceAsync(int warehouseId, string customerName, List<InvoiceItemDto> items)
         {
-            // Tranzakció indítása
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // 1. Számlaszám generálása (évszám + következő sorszám)
-                var lastInvoiceCount = await _context.Invoices.CountAsync();
-                var invoiceNumber = $"{DateTime.Now.Year}/{(lastInvoiceCount + 1):D4}";
+
+                // 1. Pesszimista lock: Zároljuk az Invoices táblát a generálás idejére (SQL Server)
+                // Ez megakadályozza, hogy más kérések olvassák a sorszámot, amíg mi nem végeztünk.
+                if (_context.Database.IsNpgsql())
+                {
+                    // PostgreSQL zárolás
+                    await _context.Database.ExecuteSqlRawAsync("LOCK TABLE \"Invoices\" IN ACCESS EXCLUSIVE MODE");
+                }
+                else
+                {
+                    // SQL Server zárolás (Saját gép)
+                    await _context.Database.ExecuteSqlRawAsync("SELECT TOP 1 1 FROM Invoices WITH (TABLOCKX, HOLDLOCK)");
+                }
+
+                // 1. Számlaszám generálása
+                int currentYear = DateTime.Now.Year;
+
+                // Megkeressük az idei év legmagasabb sorszámát tartalmazó számlát
+                var lastInvoice = await _context.Invoices
+                    .Where(i => i.InvoiceNumber.StartsWith($"{currentYear}/"))
+                    .OrderByDescending(i => i.InvoiceNumber) // Szöveges sorrend miatt a legmagasabbat hozza
+                    .FirstOrDefaultAsync();
+
+                int nextId = 1;
+
+                if (lastInvoice != null)
+                {
+                    // Példa: "2024/0015" -> kivesszük a "/" utáni részt (0015)
+                    string lastNumberPart = lastInvoice.InvoiceNumber.Split('/')[1];
+                    if (int.TryParse(lastNumberPart, out int lastNumber))
+                    {
+                        nextId = lastNumber + 1;
+                    }
+                }
+
+                string invoiceNumber = $"{currentYear}/{nextId.ToString("D4")}";
 
                 var invoice = new Invoice
                 {
                     InvoiceNumber = invoiceNumber,
                     WarehouseId = warehouseId,
                     IssueDate = DateTime.UtcNow,
-                    DueDate = DateTime.UtcNow.AddDays(14), // Alapértelmezett 14 nap
+                    DueDate = DateTime.UtcNow.AddDays(14),
                     Status = PaymentStatus.Pending,
-                    CustomerName = customerName
+                    CustomerName = customerName,
+                    Items = new List<InvoiceItem>()
                 };
 
                 decimal totalNet = 0;
@@ -44,7 +81,7 @@ namespace ERP.Services
                     var product = await _context.Products.FindAsync(itemDto.ProductId);
                     if (product == null) throw new Exception($"Termék nem található: {itemDto.ProductId}");
 
-                    // 2. Készlet levonása a konkrét raktárból
+                    // 2. Készlet levonása
                     await _productService.ProcessStockIssueAsync(itemDto.ProductId, warehouseId, itemDto.Quantity);
 
                     // 3. Tétel kiszámítása
@@ -54,7 +91,7 @@ namespace ERP.Services
                     var invoiceItem = new InvoiceItem
                     {
                         ProductId = itemDto.ProductId,
-                        ProductName = product.Name, 
+                        ProductName = product.Name,
                         Quantity = itemDto.Quantity,
                         UnitPrice = itemDto.UnitPrice,
                         BuyingPrice = product.CurrentAveragePrice,
@@ -71,30 +108,40 @@ namespace ERP.Services
                 invoice.TotalTax = totalTax;
                 invoice.TotalGross = totalNet + totalTax;
 
-                _context.Invoices.Add(invoice);
+                // 4. RENDELÉS GENERÁLÁSA A LOGISZTIKÁNAK
+                // Ez az InvoiceService és OrderService közötti híd
+                var order = await _orderService.CreateOrderFromInvoiceAsync(invoice);
+
+                // Mivel az Order-t hozzáadtuk a context-hez, itt mentünk egyet, hogy legyen ID-ja
                 await _context.SaveChangesAsync();
 
-                // Minden sikerült -> Véglegesítés
+                // 5. ÖSSZEKÖTÉS
+                invoice.Order = order;
+                _context.Invoices.Add(invoice);
+
+                await _audit.LogAsync("INVOICE_CREATE", $"Új számla: {invoiceNumber}");
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
                 return invoice;
             }
             catch (Exception ex)
             {
-                // Hiba esetén minden módosítást visszavonunk (Készletlevonást is!)
                 await transaction.RollbackAsync();
-                var innerError = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                throw new Exception($"Számlázási hiba: {ex.Message}");
+                throw new Exception($"Számlázási és rendelési hiba: {ex.Message}");
             }
         }
 
+        // A többi metódus (GetInvoicesByStatusAsync, ChangeInvoiceStatusAsync) változatlan maradhat
         public async Task<IEnumerable<object>> GetInvoicesByStatusAsync(PaymentStatus? status)
         {
-            var query = _context.Invoices.AsQueryable();
+            var query = _context.Invoices
+                .Include(i => i.Items)
+                .Include(i => i.Order)
+                .AsQueryable();
 
-            if (status.HasValue)
-            {
-                query = query.Where(i => i.Status == status.Value);
-            }
+            if (status.HasValue) query = query.Where(i => i.Status == status.Value);
 
             return await query
                 .OrderByDescending(i => i.IssueDate)
@@ -104,8 +151,9 @@ namespace ERP.Services
                     i.CustomerName,
                     i.TotalGross,
                     i.Status,
-                    StatusName = i.Status.ToString(), 
-                    i.IssueDate
+                    StatusName = i.Status.ToString(),
+                    i.IssueDate,
+                    Order = i.Order != null ? new { Status = i.Order.Status.ToString() } : null
                 })
                 .ToListAsync();
         }
@@ -120,28 +168,25 @@ namespace ERP.Services
 
             if (newStatus == PaymentStatus.Cancelled && invoice.Status != PaymentStatus.Cancelled)
             {
+                if (!invoice.WarehouseId.HasValue)
+                {
+                    throw new Exception("A számla raktára már nem létezik, a készlet visszavételezése sikertelen!");
+                }
+
                 foreach (var item in invoice.Items)
                 {
-                    await _productService.ProcessStockReceiptAsync(item.ProductId, invoice.WarehouseId, item.Quantity, item.UnitPrice);
+                    await _productService.ProcessStockReceiptAsync(item.ProductId, invoice.WarehouseId.Value, item.Quantity, item.UnitPrice);
                 }
             }
-            else if (invoice.Status == PaymentStatus.Cancelled && newStatus != PaymentStatus.Cancelled)
-            {
-                throw new Exception("Sztornózott számlát nem lehet újra aktiválni, készíts újat!");
-            }
-
             invoice.Status = newStatus;
             await _context.SaveChangesAsync();
         }
-
     }
-
-    // Segéd-osztály a Swagger beküldéshez
     public class InvoiceItemDto
     {
         public int ProductId { get; set; }
         public decimal Quantity { get; set; }
         public decimal UnitPrice { get; set; }
-        public decimal TaxRate { get; set; } = 27; // Alapértelmezett magyar ÁFA
+        public decimal TaxRate { get; set; } = 27;
     }
 }

@@ -10,10 +10,10 @@ using System.Text;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
 
-    public AuthController(UserManager<IdentityUser> userManager, IConfiguration configuration)
+    public AuthController(UserManager<User> userManager, IConfiguration configuration)
     {
         _userManager = userManager;
         _configuration = configuration;
@@ -28,6 +28,9 @@ public class AuthController : ControllerBase
         // 2. Jelszó ellenőrzése
         if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
         {
+            user.LastLogin = DateTime.Now;
+            await _userManager.UpdateAsync(user);
+
             var userRoles = await _userManager.GetRolesAsync(user);
 
             // 3. "Claims" összeállítása (adatok, amiket a token hordozni fog)
@@ -35,6 +38,7 @@ public class AuthController : ControllerBase
             {
                 new Claim(ClaimTypes.Name, user.Email!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
             };
 
             // Szerepkörök hozzáadása a tokenhez
@@ -61,6 +65,7 @@ public class AuthController : ControllerBase
             return Ok(new
             {
                 token = new JwtSecurityTokenHandler().WriteToken(token),
+                role = userRoles.FirstOrDefault(),
                 expiration = token.ValidTo
             });
         }

@@ -30,6 +30,12 @@ namespace ERP.Models
         [Required]
         public decimal MinimumOrderQuantity { get; set; } = 1;
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal MinPurchasePrice { get; set; } 
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal MaxPurchasePrice { get; set; }
+
         public UnitOfMeasure Unit { get; set; }
 
         // Átlagárazás alapja: ezt a Service Layer fogja frissíteni minden bevételezésnél
@@ -46,7 +52,7 @@ namespace ERP.Models
 
         // Speciális mezők (Nullable, mert nem minden termékhez kellenek) 
 
-        public DateTime? ExpirationDate { get; set; } // Csak romlandóhoz
+        public bool IsPerishable { get; set; } 
 
         public string? StorageConditions { get; set; } // Pl. "Fagyasztva tárolandó"
 

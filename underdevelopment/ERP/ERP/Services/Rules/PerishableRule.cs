@@ -9,10 +9,7 @@ namespace ERP.Services.Rules
         public bool IsSafetyDocumentRequired() => false;
         public void ValidateProduct(Product product)
         {
-            if (product.ExpirationDate == null)
-            {
-                throw new Exception("Lejárati dátum megadása kötelező a romlandó termékeknél.");
-            }
+            product.IsPerishable = true;
 
         }
     }

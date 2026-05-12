@@ -51,7 +51,6 @@ namespace ERP.Controllers
 
         // 3. ÚJ TERMÉK LÉTREHOZÁSA 
         [HttpPost]
-        [Authorize(Roles = "Admin,Logistics")]
         public async Task<IActionResult> Create([FromBody] Product product)
         {
             try

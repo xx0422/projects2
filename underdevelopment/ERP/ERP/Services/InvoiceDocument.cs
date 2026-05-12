@@ -26,8 +26,8 @@ namespace ERP.Services
                     row.RelativeItem().Column(col =>
                     {
                         col.Item().Text($"SZÁMLA: {Model.InvoiceNumber}").FontSize(20).SemiBold().FontColor(Colors.Blue.Medium);
-                        col.Item().PaddingBottom(10).Text($"Kelt: {Model.IssueDate:yyyy.MM.dd}");
-                        col.Item().PaddingBottom(10).Text($"Kelt: {Model.DueDate:yyyy.MM.dd}");
+                        col.Item().PaddingBottom(10).Text($"Kiállítás dátuma: {Model.IssueDate:yyyy.MM.dd}");
+                        col.Item().PaddingBottom(10).Text($"Fizetési határidő: {Model.DueDate:yyyy.MM.dd}");
 
                         col.Item().Text("Vevő adatai:").FontSize(10).SemiBold();
                         col.Item().Text(Model.CustomerName).FontSize(12);

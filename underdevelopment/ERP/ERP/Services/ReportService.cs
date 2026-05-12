@@ -38,8 +38,10 @@ namespace ERP.Services
 
         public async Task<object> GetSalesReportAsync(DateTime startDate, DateTime endDate)
         {
+            var finalEndDate = endDate.Date.AddDays(1).AddTicks(-1);
+
             var sales = await _context.Invoices
-                .Where(i => i.IssueDate >= startDate && i.IssueDate <= endDate && i.Status != PaymentStatus.Cancelled)
+                .Where(i => i.IssueDate >= startDate && i.IssueDate <= finalEndDate && i.Status != PaymentStatus.Cancelled)
                 .GroupBy(i => i.IssueDate.Date) // Naponkénti csoportosítás
                 .Select(group => new SalesReportDto {
                     Date = group.Key,

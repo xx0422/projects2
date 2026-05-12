@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ERP.Data;
+﻿using ERP.Data;
 using ERP.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERP.Controllers 
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
 

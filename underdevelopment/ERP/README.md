@@ -1,4 +1,4 @@
-# Specifikáció
+# Specifikáció (https://erp-kappa-pied.vercel.app/)
 
 A projekt célja egy nagykereskedelmi vállalat működését támogató webalapú informatikai rendszer megvalósítása C# ASP.NET technológia felhasználásával.
 

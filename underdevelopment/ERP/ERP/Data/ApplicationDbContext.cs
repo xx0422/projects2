@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore; // <-- Add this using d
 namespace ERP.Data
 {
     // Itt IdentityUser helyett használhatsz saját ApplicationUser-t is, ha bõvítenéd
-    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
+    public class ApplicationDbContext : IdentityDbContext<User>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -22,8 +22,8 @@ namespace ERP.Data
         public DbSet<InvoiceItem> InvoiceItems { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<StockItem> StockItems { get; set; }
-        // public DbSet<User> Users { get; set; } <--- EZT TÖRÖLD!
         public DbSet<Shipment> Shipments { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,11 +34,22 @@ namespace ERP.Data
                 .HasIndex(i => i.InvoiceNumber)
                 .IsUnique();
 
+            modelBuilder.Entity<Invoice>()
+                .HasOne(i => i.Warehouse)
+                .WithMany()
+                .HasForeignKey(i => i.WarehouseId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Product>()
-                .HasIndex(p => p.SKU)
+                .HasIndex(p => p.SKU)   
                 .IsUnique();
 
-            // Itt konfigurálhatod a többi kapcsolatot is (pl. decimal pontosság)
+            modelBuilder.Entity<StockItem>()
+                .HasOne(s => s.Warehouse)
+                .WithMany(w => w.StockItems)
+                .HasForeignKey(s => s.WarehouseId)
+                .OnDelete(DeleteBehavior.Cascade); 
+
         }
     }
 }
