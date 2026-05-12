@@ -42,7 +42,7 @@ namespace ERP.Services
 
             var sales = await _context.Invoices
                 .Where(i => i.IssueDate >= startDate && i.IssueDate <= finalEndDate && i.Status != PaymentStatus.Cancelled)
-                .GroupBy(i => i.IssueDate.Date) // Naponkénti csoportosítás
+                .GroupBy(i => i.IssueDate.Date) 
                 .Select(group => new SalesReportDto {
                     Date = group.Key,
                     InvoiceCount = group.Count(),
@@ -100,8 +100,8 @@ namespace ERP.Services
                 .Where(i => i.Status != PaymentStatus.Cancelled)
                 .SelectMany(i => i.Items.Select(item => new {
                     WarehouseName = i.Warehouse.Name,
-                    Revenue = item.Quantity * item.UnitPrice, // Nettó bevétel
-                    Cost = item.Quantity * item.BuyingPrice   // Nettó önköltség
+                    Revenue = item.Quantity * item.UnitPrice, 
+                    Cost = item.Quantity * item.BuyingPrice  
                 }))
                 .GroupBy(x => x.WarehouseName)
                 .Select(group => new WarehouseProfitabilityDto {

@@ -1,12 +1,14 @@
 import axios from 'axios';
 
+// Ez a sor a kulcs: 
+// 1. Megpróbálja beolvasni a Vercelen beállított VITE_API_URL-t.
+// 2. Ha nem találja (vagyis a saját gépeden futtatod), akkor marad a localhost.
 const api = axios.create({
-    baseURL: 'https://localhost:7159/api' 
+    baseURL: import.meta.env.VITE_API_URL || 'https://localhost:7159/api',
 });
 
-// Ez a rész automatikusan hozzáadja a tokent a fejléchez, ha be vagy jelentkezve
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }

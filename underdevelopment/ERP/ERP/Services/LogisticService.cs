@@ -30,7 +30,6 @@ namespace ERP.Services
                 Status = ShipmentStatus.Dispatched
             };
 
-            // A rendelés státuszát is frissítjük "InTransit"-ra
             order.Status = OrderStatus.InTransit;
 
             _context.Shipments.Add(shipment);
@@ -42,7 +41,6 @@ namespace ERP.Services
         {
             int year = DateTime.Now.Year;
             var count = await _context.Shipments.CountAsync(s => s.DispatchDate.Year == year) + 1;
-            // Formátum: TRK-2026-0001
             return $"TRK-{year}-{count:D4}";
         }
 
@@ -57,7 +55,6 @@ namespace ERP.Services
 
             shipment.Status = newStatus;
 
-            // Ha a szállítmány megérkezett, a rendelést is lezárjuk
             if (newStatus == ShipmentStatus.Delivered)
             {
                 shipment.Order.Status = OrderStatus.Delivered;

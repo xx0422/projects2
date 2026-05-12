@@ -7,6 +7,4 @@ public class User : IdentityUser
     public UserRole Role { get; set; }
     public DateTime LastLogin { get; set; }
 
-    // Függvények
-    public bool HasPermission(UserRole requiredRole) { return Role == requiredRole; }
 }

@@ -8,7 +8,7 @@ namespace ERP.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IProductService _productService;
-        private readonly OrderService _orderService; // Új függőség
+        private readonly OrderService _orderService; 
         private readonly AuditService _audit;
 
         public InvoiceService(ApplicationDbContext context, IProductService productService, OrderService orderService, AuditService audit)
@@ -52,7 +52,6 @@ namespace ERP.Services
 
                 if (lastInvoice != null)
                 {
-                    // Példa: "2024/0015" -> kivesszük a "/" utáni részt (0015)
                     string lastNumberPart = lastInvoice.InvoiceNumber.Split('/')[1];
                     if (int.TryParse(lastNumberPart, out int lastNumber))
                     {
@@ -109,7 +108,6 @@ namespace ERP.Services
                 invoice.TotalGross = totalNet + totalTax;
 
                 // 4. RENDELÉS GENERÁLÁSA A LOGISZTIKÁNAK
-                // Ez az InvoiceService és OrderService közötti híd
                 var order = await _orderService.CreateOrderFromInvoiceAsync(invoice);
 
                 // Mivel az Order-t hozzáadtuk a context-hez, itt mentünk egyet, hogy legyen ID-ja
@@ -133,7 +131,6 @@ namespace ERP.Services
             }
         }
 
-        // A többi metódus (GetInvoicesByStatusAsync, ChangeInvoiceStatusAsync) változatlan maradhat
         public async Task<IEnumerable<object>> GetInvoicesByStatusAsync(PaymentStatus? status)
         {
             var query = _context.Invoices

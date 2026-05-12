@@ -12,10 +12,7 @@ namespace ERP.Services
         {
             _context = context;
         }
-
-        /// <summary>
-        /// Létrehoz egy logisztikai rendelést egy meglévő számla alapján.
-        /// </summary>
+     
         public async Task<Order> CreateOrderFromInvoiceAsync(Invoice invoice)
         {
             if (invoice == null) throw new ArgumentNullException(nameof(invoice));
@@ -23,8 +20,8 @@ namespace ERP.Services
             var order = new Order
             {
                 OrderDate = DateTime.Now,
-                Status = OrderStatus.Processing, // A logisztika számára azonnal látható
-                CustomerId = 0, // Itt érdemes lenne a CustomerName-hez rendelni egy igazi CustomerId-t a jövőben
+                Status = OrderStatus.Processing, 
+                CustomerId = 0, 
                 CustomerName = invoice.CustomerName,
                 Items = new List<OrderItem>()
             };

@@ -1,19 +1,19 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using ERP.Models; // Ellenőrizd, hogy a User osztályod melyik namespace-ben van
+using ERP.Models; 
 
 namespace ERP.Data
 {
     public static class DbInitializer
     {
-        private static ApplicationDbContext context; // Hozzáadva a context mező
+        private static ApplicationDbContext context; 
 
         public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
         {
             context = serviceProvider.GetRequiredService<ApplicationDbContext>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = serviceProvider.GetRequiredService<UserManager<User>>(); // Fontos: <User>!
+            var userManager = serviceProvider.GetRequiredService<UserManager<User>>(); 
 
-            // 1. Szerepkörök létrehozása az Enumból (vagy kézzel)
+            // 1. Szerepkörök létrehozása 
             string[] roleNames = { "Admin", "StockKeeper", "Salesman", "Logistic" };
 
             foreach (var roleName in roleNames)
@@ -35,7 +35,7 @@ namespace ERP.Data
                 await context.SaveChangesAsync();
             }
 
-            // 2. Felhasználók adatai (Email, Jelszó, Szerepkör)
+            // 2. Felhasználók adatai 
             var usersToSeed = new List<(string Email, string Password, UserRole Role, string UserName)>
             {
                 ("admin@erp.hu", "ErpPassword123!", UserRole.Admin, "admin"),
@@ -54,7 +54,7 @@ namespace ERP.Data
                         UserName = userData.UserName,
                         Email = userData.Email,
                         EmailConfirmed = true,
-                        Role = userData.Role, // Itt mentjük el a saját Enumunkat
+                        Role = userData.Role, 
                         LastLogin = DateTime.Now
                     };
 

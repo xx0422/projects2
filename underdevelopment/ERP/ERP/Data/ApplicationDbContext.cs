@@ -1,12 +1,11 @@
 using ERP.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore; // <-- Add this using directive
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore; 
 
 
 namespace ERP.Data
 {
-    // Itt IdentityUser helyett használhatsz saját ApplicationUser-t is, ha bõvítenéd
     public class ApplicationDbContext : IdentityDbContext<User>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -27,7 +26,7 @@ namespace ERP.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // EZ NAGYON FONTOS: maradjon az elsõ sor, ez konfigurálja az Identity táblákat
+            // ez konfigurálja az Identity táblákat
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Invoice>()

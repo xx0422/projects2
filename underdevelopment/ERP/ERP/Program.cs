@@ -11,12 +11,11 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
-        // 1. PostgreSQL Dátumkezelés javítása (Ez kell a Selejtezõ robothoz!)
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         var builder = WebApplication.CreateBuilder(args);
 
-        // 2. ADATBÁZIS KONFIGURÁCIÓ (Összevont és javított logika)
+        // 2. ADATBÁZIS KONFIGURÁCIÓ 
         var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
         string finalConnectionString;
 
@@ -101,7 +100,7 @@ public class Program
             options.AddPolicy("VercelPolicy", policy =>
             {
                 policy.SetIsOriginAllowed(origin =>
-                        // Ez minden Vercel-es címedet engedélyezni fogja automatikusan
+                        // Ez minden Vercel-es címet engedélyezni fog, valamint a localhostot fejlesztéshez
                         new Uri(origin).Host.EndsWith("vercel.app") ||
                         origin.Contains("localhost")
                       )

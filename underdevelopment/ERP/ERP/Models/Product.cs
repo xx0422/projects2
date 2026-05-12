@@ -43,14 +43,13 @@ namespace ERP.Models
         public decimal CurrentAveragePrice { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal PurchasePrice { get; set; } // Ez a legutóbbi beszerzési ár, amit a Service Layer frissít minden bevételezésnél
+        public decimal PurchasePrice { get; set; } 
 
         // Idegen kulcs a kategóriához
         public int CategoryId { get; set; }
         public virtual Category? Category { get; set; }
         public virtual ICollection<StockItem> StockItems { get; set; } = new List<StockItem>();
 
-        // Speciális mezők (Nullable, mert nem minden termékhez kellenek) 
 
         public bool IsPerishable { get; set; } 
 

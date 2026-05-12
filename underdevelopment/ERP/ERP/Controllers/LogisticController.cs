@@ -23,7 +23,6 @@ public class LogisticsController : ControllerBase
     [HttpGet("pending-orders")]
     public async Task<IActionResult> GetPendingOrders()
     {
-        // A lekérdezést az INVOICE-ból indítjuk, mert abban van a CustomerName!
         var pendingInvoices = await _context.Invoices
             .Include(i => i.Order)
             .Where(i => i.Order != null && i.Order.Status == OrderStatus.Processing)
@@ -32,7 +31,7 @@ public class LogisticsController : ControllerBase
                 InvoiceId = i.Id,
                 InvoiceNumber = i.InvoiceNumber,
                 OrderDate = i.Order.OrderDate,
-                CustomerName = i.CustomerName, // Ez így már működni fog, mert az Invoice-ból jön
+                CustomerName = i.CustomerName, 
                 Status = i.Order.Status.ToString()
             })
             .ToListAsync();
@@ -54,22 +53,19 @@ public class LogisticsController : ControllerBase
         }
     }
 
-    // LogisticsController.cs
 
     [HttpGet("in-transit-orders")]
     public async Task<IActionResult> GetInTransitOrders()
     {
-        // A lekérdezést az Invoice-ból indítjuk, mert abban van a CustomerName
         var inTransitInvoices = await _context.Invoices
-            .Include(i => i.Order) // Beemeljük a kapcsolódó rendelést
+            .Include(i => i.Order) 
                 .ThenInclude(o => o.Shipment) // A rendelésen keresztül beemeljük a szállítmányt
             .Where(i => i.Order != null && i.Order.Status == OrderStatus.InTransit)
             .Select(i => new {
                 OrderId = i.OrderId,
                 InvoiceId = i.Id,
                 InvoiceNumber = i.InvoiceNumber,
-                CustomerName = i.CustomerName, // Az Invoice táblából
-                                               // Biztonságos elérés: ha a Shipment véletlenül null lenne, ne szálljon el a kód
+                CustomerName = i.CustomerName, 
                 Carrier = i.Order.Shipment != null ? i.Order.Shipment.CarrierName : "Ismeretlen",
                 DispatchDate = i.Order.Shipment != null ? i.Order.Shipment.DispatchDate : (DateTime?)null
             })

@@ -10,7 +10,7 @@ namespace ERP.DTOs
         public Category Category { get; set; }
         public decimal CurrentAveragePrice { get; set; }
         public decimal PurchasePrice { get; set; }
-        public int TotalStock { get; set; } // Itt lesz az összesített darabszámű
+        public int TotalStock { get; set; } 
         public UnitOfMeasure Unit { get; set; }
     }
 }

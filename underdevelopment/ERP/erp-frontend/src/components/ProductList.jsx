@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../api/axios';
-import { Table, Container, Spinner, Alert, Button, Modal, Form, Row, Col } from 'react-bootstrap';
+import { Table, Container, Spinner, Alert, Button, Modal, Form, Row, Col, Dropdown, ButtonGroup } from 'react-bootstrap';
+import StockActionModal from './StockActionModal';
+import { useNavigate } from 'react-router-dom';
 
 const ProductList = () => {
     const [products, setProducts] = useState([]);
@@ -10,9 +12,12 @@ const ProductList = () => {
     const [searchId, setSearchId] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
-    const [currentProduct, setCurrentProduct] = useState({ name: '', sku: '', categoryId: 1, unit: 'db' });
+    const [currentProduct, setCurrentProduct] = useState({ name: '', sku: '', categoryId: 1, unit: 'db', purchasePrice: 0, isPerishable: false});
     const [showDetails, setShowDetails] = useState(false);
     const [detailsProduct, setDetailsProduct] = useState(null);
+    const [showStockModal, setShowStockModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const navigate = useNavigate();
 
     const handleShowDetails = async (id) => {
         const res = await api.get(`/Product/${id}`);
@@ -79,11 +84,12 @@ const ProductList = () => {
                 // Ha megtalálta, azonnal megnyitjuk szerkesztésre
                setProducts([response.data]);
             }
-            setLoading(false);
         } catch (err) {
             console.error("Keresési hiba:", err);
             alert("A megadott ID-vel nem található termék.");
             setProducts(allProducts);        
+        } finally{
+            setLoading(false);
         }
     };
 
@@ -117,7 +123,6 @@ const ProductList = () => {
                 purchasePrice: currentProduct.purchasePrice || 0,
                 currentAveragePrice: currentProduct.currentAveragePrice || 0,
 
-                expirationDate: currentProduct.expirationDate || null,
                 safetyDocumentURL: currentProduct.safetyDocumentURL || "",
                 foodSafetyCertificateId: currentProduct.foodSafetyCertificateId || ""
             };
@@ -189,24 +194,41 @@ const ProductList = () => {
                             <td>{product.purchasePrice?.toLocaleString() ?? "0"} Ft</td>
                             <td>{product.totalStock} {product.unit}</td>
                             <td>
-                                <Button 
-                                    variant="outline-primary" 
-                                    size="sm" 
-                                    className="me-2"
-                                    onClick={() => handleEditOpen(product.id)} // Csak az ID-t adjuk át
-                                >
-                                    Szerkesztés
-                                </Button>
-                                <Button 
-                                    variant="outline-danger" 
-                                    size="sm" 
-                                    onClick={() => handleDelete(product.id)}
-                                >
-                                    Törlés
-                                </Button>
-                                <Button variant="outline-info" size="sm" className="me-2" onClick={() => handleShowDetails(product.id)}>
-                                    Részletek
-                                </Button>
+                                <Dropdown as={ButtonGroup} size="sm">
+                                    {/* Elsődleges gomb: A legfontosabb funkció */}
+                                    <Button 
+                                        variant="outline-secondary" 
+                                        onClick={() => navigate(`/product/details/${product.id}`)}
+                                    >
+                                        Készletkezelés
+                                    </Button>
+
+                                    {/* Lenyíló rész minden máshoz */}
+                                    <Dropdown.Toggle split variant="outline-secondary" id={`dropdown-split-${product.id}`} container="body" />
+
+                                    <Dropdown.Menu style={{ zIndex: 1050 }}>
+                                        <Dropdown.Header>Információ</Dropdown.Header>
+                                        <Dropdown.Item onClick={() => handleShowDetails(product.id)}>
+                                            <i className="bi bi-info-circle me-2"></i> Technikai részletek (Modal)
+                                        </Dropdown.Item>
+
+                                        <Dropdown.Divider />
+                                        
+                                        <Dropdown.Header>Módosítás</Dropdown.Header>
+                                        <Dropdown.Item onClick={() => handleEditOpen(product.id)}>
+                                            <i className="bi bi-pencil me-2"></i> Termék szerkesztése
+                                        </Dropdown.Item>
+                                        
+                                        <Dropdown.Divider />
+                                        
+                                        <Dropdown.Item 
+                                            className="text-danger" 
+                                            onClick={() => handleDelete(product.id)}
+                                        >
+                                            <i className="bi bi-trash me-2"></i> Termék törlése
+                                        </Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown>
                             </td>
                         </tr>
                     ))}
@@ -237,6 +259,17 @@ const ProductList = () => {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
+                            <Form.Label>Vevői eladási ár (Ft)</Form.Label>
+                            <Form.Control 
+                                type="number" 
+                                placeholder="0"
+                                value={currentProduct.purchasePrice} 
+                                onChange={e => setCurrentProduct({...currentProduct, purchasePrice: e.target.value})} 
+                                required 
+                            />
+                            <Form.Text className="text-muted">Ezen az áron fogják megvenni az ügyfelek.</Form.Text>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Mértékegység</Form.Label>
                             <Form.Select 
                                 value={currentProduct.unit}
@@ -256,16 +289,6 @@ const ProductList = () => {
                                 onChange={(e) => setCurrentProduct({...currentProduct, categoryId: parseInt(e.target.value)})} 
                             />
                         </Form.Group>
-                        {currentProduct.categoryId === 2 && (
-                            <Form.Group className="mb-3 p-2 border border-warning">
-                                <Form.Label>Lejárati dátum (Romlandó termék)</Form.Label>
-                                <Form.Control 
-                                    type="date" 
-                                    value={currentProduct.expirationDate || ''} 
-                                    onChange={(e) => setCurrentProduct({...currentProduct, expirationDate: e.target.value})} 
-                                />
-                            </Form.Group>
-                        )}
 
                         {currentProduct.categoryId === 3 && (
                             <Form.Group className="mb-3 p-2 border border-danger">
@@ -308,7 +331,7 @@ const ProductList = () => {
                                 <p><strong>Név:</strong> {detailsProduct.name}</p>
                                 <p><strong>Cikkszám (SKU):</strong> {detailsProduct.sku}</p>
                                 <p><strong>Mértékegység:</strong> {detailsProduct.unit}</p>
-                                <p><strong>Beszerzési ár:</strong> {detailsProduct.purchasePrice?.toLocaleString()} Ft</p>
+                                <p><strong>Eladási ár:</strong> {detailsProduct.purchasePrice?.toLocaleString()} Ft</p>
                                 <p><strong>Átlagár:</strong> {detailsProduct.currentAveragePrice?.toLocaleString()} Ft</p>
                             </Col>
                             <Col md={6}>
@@ -324,15 +347,33 @@ const ProductList = () => {
                             <Col md={12} className="mt-3">
                                 <h6>Raktárkészlet eloszlás:</h6>
                                 <ul>
-                                    {detailsProduct.stockItems?.map(item => (
-                                        <li key={item.id}>Raktár ID {item.warehouseId}: {item.quantity} {detailsProduct.unit}</li>
-                                    ))}
+                                    {detailsProduct.stockItems
+                                        ?.filter(item => item.quantity > 0) // 1. CSAK a nullánál nagyobb készleteket engedjük át
+                                        .map(item => (
+                                            <li key={item.id}>
+                                                Raktár ID {item.warehouseId}: <strong>{item.quantity} {detailsProduct.unit}</strong>
+                                                
+                                                {/* 2. Ha van lejárati dátum, akkor azt is kiírjuk zárójelben */}
+                                                {item.expirationDate && (
+                                                    <span className="text-muted ms-2">
+                                                        (Lejárat: {new Date(item.expirationDate).toLocaleDateString('hu-HU')})
+                                                    </span>
+                                                )}
+                                            </li>
+                                        ))}
                                 </ul>
                             </Col>
                         </Row>
                     )}
                 </Modal.Body>
             </Modal>
+            <StockActionModal 
+                show={showStockModal} 
+                onHide={() => setShowStockModal(false)}
+                productId={selectedProduct?.id}
+                productName={selectedProduct?.name}
+                onEntrySuccess={fetchProducts} // Frissíti a TotalStock-ot a listában
+            />
         </Container>
     );
 };

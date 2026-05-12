@@ -94,8 +94,8 @@ namespace ERP.Services
         public async Task<IEnumerable<Product?>> GetAllProductsAsync()
         {
             return await _context.Products
-                .Include(p => p.Category)   // Hogy lássuk a kategória nevét
-                .Include(p => p.StockItems)  // Hogy lássuk a készletet
+                .Include(p => p.Category)   
+                .Include(p => p.StockItems)  
                 .ToListAsync();
 
         }
@@ -141,7 +141,7 @@ namespace ERP.Services
                 product.CurrentAveragePrice = unitPrice;
             }
 
-            product.PurchasePrice = unitPrice; // Utolsó beszerzési ár
+            product.PurchasePrice = unitPrice; 
 
             // 4. KÉSZLET HOZZÁADÁSA (Keresünk azonos lejáratú adagot, ha nincs, újat csinálunk)
             var targetStock = product.StockItems.FirstOrDefault(s => s.WarehouseId == warehouseId && s.ExpirationDate == expirationDate);
@@ -153,7 +153,7 @@ namespace ERP.Services
                     ProductId = productId,
                     WarehouseId = warehouseId,
                     Quantity = 0,
-                    ExpirationDate = expirationDate // Itt kapja meg a konkrét adag a dátumot!
+                    ExpirationDate = expirationDate 
                 };
                 _context.StockItems.Add(targetStock);
             }
@@ -228,7 +228,7 @@ namespace ERP.Services
 
             decimal remainingToIssue = quantity;
 
-            // Végigmegyünk az adagokon, és elkezdjük "leenni" róluk a mennyiséget
+            // Végigmegyünk az adagokon
             foreach (var stock in stocks)
             {
                 if (remainingToIssue <= 0) break;

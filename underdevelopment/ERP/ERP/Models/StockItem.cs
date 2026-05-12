@@ -16,8 +16,6 @@ namespace ERP.Models
 
         public virtual Product? Product { get; set; }
 
-        // Függvények
-        public void AddStock(decimal amount) { Quantity += amount; }
-        public void RemoveStock(decimal amount) { Quantity -= amount; }
+        
     }
 }

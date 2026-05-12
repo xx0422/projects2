@@ -65,25 +65,22 @@ namespace ERP.Services
                             header.Cell().Element(CellStyle).AlignRight().Text("Bruttó");
                             header.Cell().Element(CellStyle).AlignRight().Text("Áfa(%)");
 
-                            // Adunk egy kis paddinget alulra, hogy ne csússzon össze a tartalommal
                             static IContainer CellStyle(IContainer container) => container.PaddingBottom(10).BorderBottom(1).BorderColor(Colors.Black);
                         });
 
                         foreach (var item in Model.Items)
                         {
-                            table.Cell().Element(MainCellStyle).Text("1"); // Sorszám
+                            table.Cell().Element(MainCellStyle).Text("1");
                             table.Cell().Element(MainCellStyle).Text(item.ProductName);
                             table.Cell().Element(MainCellStyle).AlignRight().Text($"{item.Quantity}");
                             table.Cell().Element(MainCellStyle).AlignRight().Text($"{item.UnitPrice:N0} Ft");
                             table.Cell().Element(MainCellStyle).AlignRight().Text($"{item.LineTotal:N0} Ft");
                             table.Cell().Element(MainCellStyle).AlignRight().Text($"{item.TaxRate:N1}");
 
-                            // A PaddingVertical(8) adja meg a sorok közötti távolságot
                             static IContainer MainCellStyle(IContainer container) => container.PaddingVertical(8).BorderBottom(1).BorderColor(Colors.Grey.Lighten3);
                         }
                     });
 
-                    // Összesítés eltolása kicsit lejjebb
                     col.Item().PaddingTop(30).AlignRight().Column(c => {
                         c.Item().Text($"Összes Nettó: {Model.TotalNet:N0} Ft").FontSize(10);
                         c.Item().Text($"ÁFA összesen: {Model.TotalTax:N0} Ft").FontSize(10);

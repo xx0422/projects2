@@ -11,7 +11,7 @@ const Login = ({ onLoginSuccess }) => {
         e.preventDefault();
         try {
             const response = await api.post('/auth/login', { email, password });
-            localStorage.setItem('token', response.data.token);
+            sessionStorage.setItem('token', response.data.token);
             onLoginSuccess();
         } catch (err) {
             setError('Hibás email vagy jelszó!');
