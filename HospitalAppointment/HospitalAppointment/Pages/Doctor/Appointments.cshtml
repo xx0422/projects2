@@ -1,0 +1,95 @@
+﻿@page
+@model HospitalAppointment.Pages.Doctor.AppointmentsModel
+@{
+    ViewData["Title"] = "Napi Előjegyzések";
+}
+
+<h1>Előjegyzések kezelése</h1>
+<hr />
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <form method="get">
+            <label class="form-label fw-bold">Válassz dátumot:</label>
+            <input type="date" asp-for="SelectedDate" class="form-control" onchange="this.form.submit()" />
+        </form>
+    </div>
+</div>
+
+@if (Model.Appointments != null && Model.Appointments.Any())
+{
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Időpont</th>
+                <th>Páciens Neve</th>
+                <th>Jelenlegi Státusz</th>
+                <th>Műveletek (Workflow)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Appointments)
+            {
+                <tr>
+                    <td><strong>@item.StartTime.ToString("HH:mm") - @item.EndTime.ToString("HH:mm")</strong></td>
+                    <td>@item.Patient.FullName</td>
+                    <td>
+                        @if (item.Status == HospitalAppointment.Models.AppointmentStatus.Pending)
+                        {
+                            <span class="badge bg-warning text-dark">Függőben</span>
+                        }
+                        else if (item.Status == HospitalAppointment.Models.AppointmentStatus.Confirmed)
+                        {
+
+                            <span class="badge bg-success">Jóváhagyva</span>
+                        }
+                        else if (item.Status == HospitalAppointment.Models.AppointmentStatus.Completed)
+                        {
+
+                            <span class="badge bg-info text-dark">Befejezve</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge bg-danger">Törölve</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.Status == HospitalAppointment.Models.AppointmentStatus.Pending)
+                        {
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@item.Id" class="d-inline">
+                                <input type="hidden" name="status" value="Confirmed" />
+                                <button type="submit" class="btn btn-sm btn-success">Jóváhagyás</button>
+                            </form>
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@item.Id" class="d-inline">
+                                <input type="hidden" name="status" value="Cancelled" />
+                                <button type="submit" class="btn btn-sm btn-danger">Elutasít/Töröl</button>
+                            </form>
+                        }
+                        else if (item.Status == HospitalAppointment.Models.AppointmentStatus.Confirmed)
+                        {
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@item.Id" class="d-inline">
+                                <input type="hidden" name="status" value="Completed" />
+                                <button type="submit" class="btn btn-sm btn-info">Vizit Befejezve</button>
+                            </form>
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@item.Id" class="d-inline">
+                                <input type="hidden" name="status" value="Cancelled" />
+                                <button type="submit" class="btn btn-sm btn-danger">Törlés</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted small">Lezárt időpont</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-secondary">
+        Erre a napra (@Model.SelectedDate.ToString("yyyy. MM. dd.")) nincsenek előjegyzések.
+    </div>
+}

@@ -1,0 +1,48 @@
+﻿@page
+@model HospitalAppointment.Areas.Identity.Pages.Account.RegisterModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers 
+@{
+    ViewData["Title"] = "Registration";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <form id="registerForm" method="post">
+            <hr />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.FullName" class="form-label fw-bold">Full Name</label>
+                <input asp-for="Input.FullName" class="form-control" autocomplete="Németh Péter" />
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.Email" class="form-label fw-bold">Email</label>
+                <input asp-for="Input.Email" class="form-control" autocomplete="pelda@gmail.com" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.Password" class="form-label fw-bold">Password</label>
+                <input asp-for="Input.Password" class="form-control" autocomplete="Jelszó1!" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+                <small class="text-muted">A jelszónak tartalmaznia kell kisbetűt, nagybetűt, számot és speciális karaktert.</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.ConfirmPassword" class="form-label fw-bold">Password again</label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="Jelszó1!" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-success mt-2">Regisztráció és Belépés</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

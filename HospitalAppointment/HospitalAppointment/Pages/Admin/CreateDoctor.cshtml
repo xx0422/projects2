@@ -1,0 +1,54 @@
+﻿@page
+@model HospitalApp.Pages.Admin.CreateDoctorModel
+@{
+    ViewData["Title"] = "Új Orvos Rögzítése";
+}
+
+<h1>Új Orvos Rögzítése</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.FullName" class="control-label"></label>
+                <input asp-for="Input.FullName" class="form-control" />
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.Specialty" class="control-label"></label>
+                <select asp-for="Input.Specialty" class="form-control">
+                    <option value="">-- Válassz szakterületet --</option>
+                    @foreach (var spec in HospitalAppointment.Models.Specialties.List)
+                    {
+                        <option value="@spec">@spec</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.Specialty" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.Email" class="control-label"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.Password" class="control-label"></label>
+                <input asp-for="Input.Password" class="form-control" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Mentés és Hozzáadás</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

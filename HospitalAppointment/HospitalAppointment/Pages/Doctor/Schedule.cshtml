@@ -1,0 +1,90 @@
+﻿@page
+@model HospitalAppointment.Pages.Doctor.ScheduleModel
+@{
+    ViewData["Title"] = "Rendelési Idők Beállítása";
+}
+
+<h1>Rendelési Idők Beállítása</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        <h4>Új rendelési idő</h4>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.Day" class="control-label"></label>
+                <select asp-for="Input.Day" class="form-control">
+                    <option value="1">Hétfő</option>
+                    <option value="2">Kedd</option>
+                    <option value="3">Szerda</option>
+                    <option value="4">Csütörtök</option>
+                    <option value="5">Péntek</option>
+                    <option value="6">Szombat</option>
+                    <option value="0">Vasárnap</option>
+                </select>
+                <span asp-validation-for="Input.Day" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.StartTime" class="control-label"></label>
+                <input asp-for="Input.StartTime" class="form-control" type="time" />
+                <span asp-validation-for="Input.StartTime" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Input.EndTime" class="control-label"></label>
+                <input asp-for="Input.EndTime" class="form-control" type="time" />
+                <span asp-validation-for="Input.EndTime" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Mentés</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-8">
+        <h4>Aktuális Beosztásom</h4>
+        @if (Model.MySchedules != null && Model.MySchedules.Any())
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Nap</th>
+                        <th>Kezdés</th>
+                        <th>Befejezés</th>
+                        <th>Műveletek</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.MySchedules)
+                    {
+                        <tr>
+                            <td>@System.Globalization.CultureInfo.GetCultureInfo("hu-HU").DateTimeFormat.GetDayName(item.Day)</td>
+                            <td>@item.StartTime.ToString(@"hh\:mm")</td>
+                            <td>@item.EndTime.ToString(@"hh\:mm")</td>
+                            <td>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id">
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Biztosan törölni szeretnéd ezt a beosztást?');">
+                                        Törlés
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">Még nem állítottál be rendelési időt.</p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

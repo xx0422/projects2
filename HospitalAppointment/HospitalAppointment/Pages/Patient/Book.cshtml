@@ -1,0 +1,142 @@
+﻿@page
+@model HospitalAppointment.Pages.Patient.BookModel
+@{
+    ViewData["Title"] = "Időpontfoglalás";
+}
+
+<h1>Időpontfoglalás</h1>
+<hr />
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div class="form-group mb-3">
+                <label class="control-label">1. Válassz szakterületet</label>
+                <select id="specialtySelect" class="form-select">
+                    <option value="">-- Kérlek válassz --</option>
+                    @foreach (var spec in HospitalAppointment.Models.Specialties.List)
+                    {
+                        <option value="@spec">@spec</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">2. Válassz orvost</label>
+                <select id="doctorSelect" name="doctorId" class="form-select" disabled>
+                    <option value="">-- Előbb válassz szakterületet --</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">3. Válassz rendelési napot</label>
+                <select id="dateSelect" name="date" class="form-select" disabled>
+                    <option value="">-- Előbb válassz orvost --</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">4. Válassz pontos időpontot (15 perces blokkok)</label>
+                <select id="timeSlotSelect" name="timeSlot" class="form-select" disabled>
+                    <option value="">-- Előbb válassz napot --</option>
+                </select>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-success w-100" disabled>Időpont lefoglalása</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // DOM elemek
+        const specialtySelect = document.getElementById('specialtySelect');
+        const doctorSelect = document.getElementById('doctorSelect');
+        const dateSelect = document.getElementById('dateSelect');
+        const timeSlotSelect = document.getElementById('timeSlotSelect');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Szakterület változás -> Orvosok betöltése
+        specialtySelect.addEventListener('change', async function () {
+            resetSelect(doctorSelect, '-- Előbb válassz szakterületet --');
+            resetSelect(dateSelect, '-- Előbb válassz orvost --');
+            resetSelect(timeSlotSelect, '-- Előbb válassz napot --');
+            submitBtn.disabled = true;
+
+            if (!this.value) return;
+
+            const response = await fetch(`?handler=DoctorsBySpecialty&specialty=${encodeURIComponent(this.value)}`);
+            const doctors = await response.json();
+
+            populateSelect(doctorSelect, doctors, 'id', 'name', '-- Válassz orvost --');
+        });
+
+        // Orvos változás -> Napok betöltése
+        doctorSelect.addEventListener('change', async function () {
+            resetSelect(dateSelect, '-- Előbb válassz orvost --');
+            resetSelect(timeSlotSelect, '-- Előbb válassz napot --');
+            submitBtn.disabled = true;
+
+            if (!this.value) return;
+
+            const response = await fetch(`?handler=AvailableDates&doctorId=${encodeURIComponent(this.value)}`);
+            const dates = await response.json();
+
+            populateSelect(dateSelect, dates, 'dateValue', 'displayTitle', '-- Válassz napot --');
+        });
+
+        // Nap változás -> 15 perces időpontok betöltése
+        dateSelect.addEventListener('change', async function () {
+            resetSelect(timeSlotSelect, '-- Előbb válassz napot --');
+            submitBtn.disabled = true;
+
+            if (!this.value) return;
+
+            const doctorId = doctorSelect.value;
+            const response = await fetch(`?handler=TimeSlots&doctorId=${encodeURIComponent(doctorId)}&date=${encodeURIComponent(this.value)}`);
+            const slots = await response.json();
+
+            // Mivel itt csak stringek jönnek vissza listaként
+            timeSlotSelect.innerHTML = '<option value="">-- Válassz időpontot --</option>';
+            slots.forEach(slot => {
+                const option = document.createElement('option');
+                option.value = slot;
+                option.textContent = slot;
+                timeSlotSelect.appendChild(option);
+            });
+            timeSlotSelect.disabled = false;
+        });
+
+        // Időpont választás -> Gomb engedélyezése
+        timeSlotSelect.addEventListener('change', function () {
+            submitBtn.disabled = !this.value;
+        });
+
+        // Segédfüggvény a dropdown ürítéséhez
+        function resetSelect(selectElement, defaultText) {
+            selectElement.innerHTML = `<option value="">${defaultText}</option>`;
+            selectElement.disabled = true;
+        }
+
+        // Segédfüggvény a dropdown feltöltéséhez JSON alapján
+        function populateSelect(selectElement, dataArray, valueKey, textKey, defaultText) {
+            selectElement.innerHTML = `<option value="">${defaultText}</option>`;
+            dataArray.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                selectElement.appendChild(option);
+            });
+            selectElement.disabled = false;
+        }
+    </script>
+}
